@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+
+<div class="auth-container">
+
+    <div class="auth-card">
+
+        <h1>Welcome {{ name }} 👋</h1>
+
+        <p>Ready to review your Python code?</p>
+
+        <a href="{{ url_for('upload') }}" class="hero-btn">
+            Upload Python File
+        </a>
+
+    </div>
+
+</div>
+
+
+<a href="{{ url_for('logout') }}" class="btn btn-danger">
+    Logout
+</a>
+    </div>
+
+</div>
+
+{% endblock %}

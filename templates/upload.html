@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="auth-container">
+
+    <div class="auth-card">
+
+        <h1>Upload Python File</h1>
+
+        <p>Choose a Python (.py) file for AI review.</p>
+
+        {% if message %}
+            <div class="{% if message_type == 'success' %}success-alert{% else %}alert{% endif %}">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+
+            <input
+                type="file"
+                name="code_file"
+                accept=".py"
+                required
+            >
+
+            <button type="submit">
+                Upload File
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

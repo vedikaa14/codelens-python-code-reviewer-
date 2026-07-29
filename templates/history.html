@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="report-container">
+
+    <div class="report-header">
+
+        <h1>📜 Review History</h1>
+
+        <p>Your previous AI code reviews.</p>
+
+        <h3>Total Reviews : {{ reviews|length }}</h3>
+
+    </div>
+
+    {% if reviews %}
+
+    <div class="history-table-container">
+
+        <table class="history-table">
+
+            <thead>
+
+                <tr>
+                    <th>Filename</th>
+                    <th>Python File</th>
+                    <th>PDF Report</th>
+                    <th>Date</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for review in reviews %}
+
+                <tr>
+
+                    <td>
+
+                        <strong>{{ review.filename }}</strong>
+
+                    </td>
+
+                    <td>
+
+                        {% if review.python_file_url %}
+
+                        <a href="{{ review.python_file_url }}" target="_blank">
+
+                            🐍 View Python File
+
+                        </a>
+
+                        {% else %}
+
+                        Not Available
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if review.pdf_url %}
+
+                        <a href="{{ review.pdf_url }}" target="_blank">
+
+                            📄 View PDF
+
+                        </a>
+
+                        {% else %}
+
+                        PDF Not Generated
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {{ review.created_at.strftime("%d %b %Y %I:%M %p") }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="report-card">
+
+        <h3>No reviews found.</h3>
+
+        <p>Upload your first Python file to generate an AI review.</p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

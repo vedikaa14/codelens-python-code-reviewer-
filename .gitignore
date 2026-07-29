@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+
+.env
+
+reports/*.pdf
+!reports/.gitkeep
+
+uploads/*
+!uploads/.gitkeep
+
+*.pdf

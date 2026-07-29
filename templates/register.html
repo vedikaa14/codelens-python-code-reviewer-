@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="auth-container">
+
+    <div class="auth-card">
+
+        <h1>Create Account</h1>
+
+        <p>Join CodeLens AI and start reviewing your code.</p>
+
+        {% if message %}
+        <div class="alert">
+            {{ message }}
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('register') }}" method="POST">
+
+            <input type="text" name="full_name" placeholder="Full Name" required>
+
+            <input type="email" name="email" placeholder="Email Address" required>
+
+            <input type="password" name="password" placeholder="Password" required>
+
+            <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+
+            <select name="role" required>
+                <option value="">Select Role</option>
+                <option>Student</option>
+                <option>Developer</option>
+                <option>Recruiter</option>
+            </select>
+
+            <button type="submit">
+                Create Account
+            </button>
+
+        </form>
+
+        <p class="bottom-text">
+            Already have an account?
+
+            <a href="{{ url_for('login') }}">
+                Login
+            </a>
+
+        </p>
+
+    </div>
+
+</div>
+
+{% endblock %}

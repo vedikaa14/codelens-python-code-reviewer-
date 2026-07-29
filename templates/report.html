@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="report-container">
+
+    <!-- Page Title -->
+    <div class="report-header">
+
+        <h1>🤖 AI Code Review Report</h1>
+
+        <p>Your Python code has been analyzed successfully.</p>
+
+    </div>
+
+    <!-- Uploaded Code -->
+    <div class="report-card">
+
+        <h2>📄 Uploaded Code</h2>
+
+        <pre>{{ code }}</pre>
+
+    </div>
+
+    <!-- Overall Rating -->
+    <div class="report-card">
+
+        <h2>⭐ Overall Rating</h2>
+
+        <div class="rating-box">
+
+            {{ review.overall_rating }}
+
+        </div>
+
+    </div>
+
+    <!-- Summary -->
+    <div class="report-card">
+
+        <h2>📝 Summary</h2>
+
+        <p>{{ review.summary }}</p>
+
+    </div>
+
+    <!-- Bugs -->
+    <div class="report-card">
+
+        <h2>🐞 Bugs Found</h2>
+
+        <ul>
+
+            {% for bug in review.bugs %}
+
+                <li>{{ bug }}</li>
+
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+    <!-- Code Quality -->
+    <div class="report-card">
+
+        <h2>✨ Code Quality</h2>
+
+        <ul>
+
+            {% for item in review.code_quality %}
+
+                <li>{{ item }}</li>
+
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+    <!-- Performance -->
+    <div class="report-card">
+
+        <h2>⚡ Performance Improvements</h2>
+
+        <ul>
+
+            {% for item in review.performance %}
+
+                <li>{{ item }}</li>
+
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+    <!-- Security -->
+    <div class="report-card">
+
+        <h2>🔒 Security Issues</h2>
+
+        <ul>
+
+            {% for item in review.security %}
+
+                <li>{{ item }}</li>
+
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+    <!-- Best Practices -->
+    <div class="report-card">
+
+        <h2>📚 Best Practices</h2>
+
+        <ul>
+
+            {% for item in review.best_practices %}
+
+                <li>{{ item }}</li>
+
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+    <!-- Readability -->
+    <div class="report-card">
+
+        <h2>📖 Readability</h2>
+
+        <ul>
+
+            {% for item in review.readability %}
+
+                <li>{{ item }}</li>
+
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+    <!-- Optimized Code -->
+    <div class="report-card">
+
+        <h2>💻 Optimized Code</h2>
+
+        <pre>{{ review.optimized_code }}</pre>
+
+    </div>
+
+    <!-- Buttons -->
+    <div class="report-buttons">
+
+    <a href="{{ url_for('upload') }}" class="btn-primary">
+        🔄 Review Another File
+    </a>
+
+    <a href="{{ url_for('download_report') }}" class="btn-primary">
+        📄 Download PDF
+    </a>
+
+    <a href="{{ url_for('logout') }}" class="btn-danger">
+        🚪 Logout
+    </a>
+
+</div>
+
+
+{% endblock %}

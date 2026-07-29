@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CodeLens AI</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+
+    <a href="{{ url_for('home') }}">
+        🤖 CodeLens AI
+    </a>
+
+</div>
+        <div class="nav-links">
+
+            <a href="{{ url_for('home') }}">
+                Home
+            </a>
+
+            {% if session.get("user_id") %}
+
+    <a href="{{ url_for('dashboard') }}">
+        Dashboard
+    </a>
+
+    <a href="{{ url_for('history') }}">
+        History
+    </a>
+
+    <a href="{{ url_for('logout') }}" class="logout-btn">
+        Logout
+    </a>
+
+{% else %}
+
+                <a href="{{ url_for('login') }}">
+                    Login
+                </a>
+
+                <a href="{{ url_for('register') }}">
+                    Register
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </nav>
+
+    <!-- ================= PAGE CONTENT ================= -->
+
+    <main>
+        
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+</body>
+
+</html>
