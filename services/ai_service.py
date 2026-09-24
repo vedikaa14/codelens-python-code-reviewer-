@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 import re
 import time
-
+import traceback
 # -----------------------------------
 # Load Environment Variables
 # -----------------------------------
@@ -64,13 +64,10 @@ def review_python_code(code):
     MAX_LINES = 300
 
     lines = code.splitlines()
-
     truncated = False
 
     if len(lines) > MAX_LINES:
-
         code = "\n".join(lines[:MAX_LINES])
-
         truncated = True
 
     prompt = f"""
@@ -81,58 +78,43 @@ Analyze the following Python code carefully.
 Return your answer EXACTLY in this format.
 
 # Overall Rating
-
 Give ONLY the rating out of 10.
 
 # Summary
-
 Write 4-5 concise lines summarizing the code.
 
 # Bugs Found
-
 Use bullet points beginning with "-".
 
 # Code Quality
-
 Use bullet points beginning with "-".
 
 # Performance Improvements
-
 Use bullet points beginning with "-".
 
 # Security Issues
-
 Use bullet points beginning with "-".
 
 # Best Practices
-
 Use bullet points beginning with "-".
 
 # Readability
-
 Use bullet points beginning with "-".
 
 # Optimized Code
-
 Return ONLY the improved Python code.
 
 Do NOT use Markdown.
-
 Do NOT use triple backticks.
-
 Do NOT return JSON.
 """
 
     if truncated:
-
         prompt += """
 
 NOTE:
-
 The uploaded file exceeded 300 lines.
-
 Review ONLY the visible portion.
-
 Mention this limitation in the summary.
 
 """
@@ -142,24 +124,31 @@ Mention this limitation in the summary.
 Python Code:
 
 {code}
-
 """
-        # -----------------------------------
-    # Call Gemini API with Retry Logic
-    # -----------------------------------
+
+    MAX_RETRIES = 3
 
     try:
-
-        MAX_RETRIES = 3
 
         for attempt in range(MAX_RETRIES):
 
             try:
 
+                print(f"\n========== GEMINI REQUEST ({attempt+1}/{MAX_RETRIES}) ==========")
+
+                start = time.time()
+
                 response = client.models.generate_content(
-                    model="gemini-3.5-flash",
+                    model="gemini-2.5-flash",
                     contents=prompt
                 )
+
+                elapsed = time.time() - start
+
+                print(f"✅ Gemini Response Time: {elapsed:.2f} seconds")
+
+                if not response or not response.text:
+                    raise Exception("Gemini returned an empty response.")
 
                 text = response.text
 
@@ -171,30 +160,27 @@ Python Code:
 
             except Exception as e:
 
-                error_message = str(e).lower()
+                error = str(e).lower()
+
+                print(f"Gemini Error: {e}")
 
                 if (
                     (
-                        "503" in error_message
-                        or "unavailable" in error_message
-                        or "high demand" in error_message
+                        "503" in error
+                        or "unavailable" in error
+                        or "overloaded" in error
+                        or "high demand" in error
                     )
                     and attempt < MAX_RETRIES - 1
                 ):
 
-                    print(
-                        f"⚠️ Gemini busy. Retrying ({attempt + 1}/{MAX_RETRIES})..."
-                    )
+                    print(f"⚠️ Gemini busy. Retrying ({attempt+1}/{MAX_RETRIES})...")
 
-                    time.sleep(3)
+                    time.sleep(2)
 
                     continue
 
                 raise
-
-        # -----------------------------------
-        # Parse Gemini Response
-        # -----------------------------------
 
         review = {
 
@@ -264,27 +250,26 @@ Python Code:
             )
 
         }
-                # -----------------------------------
-        # Fill Missing Values
-        # -----------------------------------
 
-        review.setdefault("overall_rating", "N/A")
-        review.setdefault("summary", "No summary generated.")
-        review.setdefault("bugs", [])
-        review.setdefault("code_quality", [])
-        review.setdefault("performance", [])
-        review.setdefault("security", [])
-        review.setdefault("best_practices", [])
-        review.setdefault("readability", [])
-        review.setdefault("optimized_code", "No optimized code generated.")
+        review["overall_rating"] = review["overall_rating"] or "N/A"
+        review["summary"] = review["summary"] or "No summary generated."
+        review["bugs"] = review["bugs"] or []
+        review["code_quality"] = review["code_quality"] or []
+        review["performance"] = review["performance"] or []
+        review["security"] = review["security"] or []
+        review["best_practices"] = review["best_practices"] or []
+        review["readability"] = review["readability"] or []
+        review["optimized_code"] = (
+            review["optimized_code"] or
+            "No optimized code generated."
+        )
 
         return review
 
     except Exception as e:
 
         print("\n========== GEMINI ERROR ==========")
-        print(type(e))
-        print(e)
+        traceback.print_exc()
         print("==================================\n")
 
         return {

@@ -1,7 +1,7 @@
 import os
+import traceback
 import boto3
 from dotenv import load_dotenv
-from botocore.exceptions import ClientError
 
 load_dotenv()
 
@@ -17,21 +17,26 @@ BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
 
 def upload_file(local_file_path, s3_folder):
     """
-    Uploads a file to AWS S3.
+    Upload a file to AWS S3.
 
     Args:
-        local_file_path: Path of file on local machine.
-        s3_folder: uploads or reports
+        local_file_path: Local file path
+        s3_folder: Folder inside S3 bucket (e.g. uploads)
 
     Returns:
-        S3 URL if successful, otherwise None.
+        S3 URL if successful, otherwise None
     """
 
     filename = os.path.basename(local_file_path)
-
     s3_key = f"{s3_folder}/{filename}"
 
     try:
+        print("========== S3 DEBUG ==========")
+        print("Bucket:", BUCKET_NAME)
+        print("Region:", os.getenv("AWS_REGION"))
+        print("File:", local_file_path)
+        print("S3 Key:", s3_key)
+        print("==============================")
 
         s3.upload_file(
             local_file_path,
@@ -39,16 +44,23 @@ def upload_file(local_file_path, s3_folder):
             s3_key
         )
 
+        print("✅ File uploaded successfully!")
+
         url = (
             f"https://{BUCKET_NAME}.s3."
             f"{os.getenv('AWS_REGION')}.amazonaws.com/"
             f"{s3_key}"
         )
 
+        print("S3 URL:", url)
+
         return url
 
-    except ClientError as e:
-
-        print("S3 Upload Error:", e)
+    except Exception as e:
+        print("\n========== S3 UPLOAD ERROR ==========")
+        print("Exception Type:", type(e).__name__)
+        print("Exception:", str(e))
+        traceback.print_exc()
+        print("=====================================\n")
 
         return None

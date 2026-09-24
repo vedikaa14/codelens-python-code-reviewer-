@@ -228,3 +228,4 @@ uploads/*
 !uploads/.gitkeep
 
 *.pdf
+*.zip

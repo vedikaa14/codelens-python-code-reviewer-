@@ -17,7 +17,7 @@ from services.auth import register_user, login_user
 from services.analyzer import read_python_file
 from services.ai_service import review_python_code
 from services.pdf_service import generate_pdf
-from flask import send_file
+import flask
 
 from services.s3_service import upload_file
 app = Flask(__name__)
@@ -95,9 +95,7 @@ def dashboard():
     )
 
 
-# -----------------------------
-#Upload + AI Review
-# -----------------------------
+
 # -----------------------------
 # Upload + AI Review
 # -----------------------------
@@ -109,110 +107,142 @@ def upload():
 
     if request.method == "POST":
 
-        file = request.files.get("code_file")
+        try:
 
-        if file is None:
-            return render_template(
-                "upload.html",
-                message="Please choose a file.",
-                message_type="error"
+            file = request.files.get("code_file")
+
+            if file is None:
+                return render_template(
+                    "upload.html",
+                    message="Please choose a file.",
+                    message_type="error"
+                )
+
+            if file.filename == "":
+                return render_template(
+                    "upload.html",
+                    message="No file selected.",
+                    message_type="error"
+                )
+
+            if not file.filename.endswith(".py"):
+                return render_template(
+                    "upload.html",
+                    message="Only Python (.py) files are allowed.",
+                    message_type="error"
+                )
+
+            # -------------------------
+            # Save locally
+            # -------------------------
+
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+            filepath = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                file.filename
             )
 
-        if file.filename == "":
-            return render_template(
-                "upload.html",
-                message="No file selected.",
-                message_type="error"
+            file.save(filepath)
+
+            print("✅ File saved locally:", filepath)
+
+            # -------------------------
+            # Upload to S3
+            # -------------------------
+
+            python_file_url = upload_file(
+                filepath,
+                "uploads"
             )
 
-        if not file.filename.endswith(".py"):
-            return render_template(
-                "upload.html",
-                message="Only Python (.py) files are allowed.",
-                message_type="error"
+            print("S3 URL:", python_file_url)
+
+            if python_file_url is None:
+                return render_template(
+                    "upload.html",
+                    message="Failed to upload file to AWS S3.",
+                    message_type="error"
+                )
+
+            session["python_file_url"] = python_file_url
+            session["filename"] = file.filename
+
+            # -------------------------
+            # Read File
+            # -------------------------
+
+            success, code = read_python_file(filepath)
+
+            if not success:
+                return render_template(
+                    "upload.html",
+                    message=code,
+                    message_type="error"
+                )
+
+            print("✅ Python file read successfully")
+
+            # -------------------------
+            # Gemini Review
+            # -------------------------
+
+            review = review_python_code(code)
+
+            print("Gemini Response:", review)
+
+            if review.get("overall_rating") == "Error":
+
+                return render_template(
+                    "upload.html",
+                    message=review["summary"],
+                    message_type="error"
+                )
+
+            session["review"] = review
+
+            # -------------------------
+            # Save Review
+            # -------------------------
+
+            new_review = Review(
+                user_id=session["user_id"],
+                filename=file.filename,
+                python_file_url=python_file_url,
+                review_data=json.dumps(review)
             )
 
-        # Create uploads folder
-        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+            db.session.add(new_review)
+            db.session.commit()
 
-        filepath = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            file.filename
-        )
+            session["review_id"] = new_review.id
 
-        # Save uploaded file locally
-        file.save(filepath)
+            print("✅ Review saved successfully")
+            print("Review ID:", new_review.id)
 
-        # Upload Python file to S3
-        python_file_url = upload_file(
-            filepath,
-            "uploads"
-        )
-
-        session["python_file_url"] = python_file_url
-        session["filename"] = file.filename
-
-        if python_file_url:
-            print("\n✅ Python file uploaded successfully!")
-            print(python_file_url)
-        else:
-            print("\n❌ Failed to upload Python file to AWS.")
-
-        # Read uploaded code
-        success, code = read_python_file(filepath)
-
-        if not success:
             return render_template(
-                "upload.html",
-                message=code,
-                message_type="error"
+                "report.html",
+                code=code,
+                review=review
             )
 
-        # Generate AI Review
-        review = review_python_code(code)
+        except Exception as e:
 
-        # -----------------------------
-        # Gemini Failed
-        # -----------------------------
-        if review.get("overall_rating") == "Error":
+            db.session.rollback()
+
+            print("\n========== UPLOAD ERROR ==========")
+            print(type(e))
+            print(e)
+            print("==================================\n")
 
             return render_template(
                 "upload.html",
-                message="🤖 AI service is currently busy. Please try again in a few seconds.",
+                message=f"Server Error: {e}",
                 message_type="error"
             )
-
-        # Store review in session
-        session["review"] = review
-
-        # Save review ONLY ONCE
-        new_review = Review(
-            user_id=session["user_id"],
-            filename=file.filename,
-            python_file_url=python_file_url,
-            review_data=json.dumps(review)
-        )
-
-        db.session.add(new_review)
-        db.session.commit()
-
-        # Save review id for PDF update
-        session["review_id"] = new_review.id
-
-        print("✅ Review saved successfully!")
-        print("Review ID:", new_review.id)
-
-        return render_template(
-            "report.html",
-            code=code,
-            review=review
-        )
 
     return render_template("upload.html")
-    # -----------------------------
-# Logout
-# -----------------------------
-
+  
 
 # -----------------------------
 # Download PDF
@@ -265,7 +295,7 @@ def download_report():
 
         print("\n❌ PDF upload failed.")
 
-    return send_file(
+    return flask.send_file(
         pdf,
         as_attachment=True
     )
@@ -315,5 +345,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=port,
         debug=False
-    )
+    ) 
     
